@@ -21,31 +21,17 @@ export function usePlaylist(addParserLogs: (logs: string[]) => void) {
     }
     return [
       {
+        id: "ru-iptv",
+        name: "🇷🇺 IPTV Russia (iptv-org)",
+        type: "m3u_url",
+        content: "https://iptv-org.github.io/iptv/countries/ru.m3u",
+        createdAt: new Date().toLocaleDateString("ru-RU")
+      },
+      {
         id: "demo-playlist",
-        name: "📺 Стандартный Демо-Плейлист (M3U)",
+        name: "📺 Демо плейлист (встроенный)",
         type: "m3u_raw",
         content: SAMPLE_M3U_PLAYLIST,
-        createdAt: new Date().toLocaleDateString("ru-RU")
-      },
-      {
-        id: "nasa-stream",
-        name: "🚀 NASA TV Live Stream (HLS)",
-        type: "single_stream",
-        content: "http://nasa-i.akamaihd.net/hls/live/253565/NASA-NTV1-Public/master.m3u8",
-        createdAt: new Date().toLocaleDateString("ru-RU")
-      },
-      {
-        id: "redbull-stream",
-        name: "🛹 Red Bull TV Live Stream (HLS)",
-        type: "single_stream",
-        content: "https://rbmn-live.akamaized.net/hls/live/590964/BoB/master.m3u8",
-        createdAt: new Date().toLocaleDateString("ru-RU")
-      },
-      {
-        id: "france24-stream",
-        name: "🌐 France 24 Live Stream (HLS)",
-        type: "single_stream",
-        content: "https://static.france24.com/live/F24_EN_LO_HLS/live_tv.m3u8",
         createdAt: new Date().toLocaleDateString("ru-RU")
       }
     ];
