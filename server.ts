@@ -287,7 +287,7 @@ async function startServer() {
     });
   }
 
-  const host = process.env.NODE_ENV === "production" ? "127.0.0.1" : "0.0.0.0";
+  const host = process.env.HOST || "0.0.0.0";
   app.listen(PORT, host, () => {
     console.log(`[Server] IPTV simulation server running on http://${host}:${PORT}`);
   });
