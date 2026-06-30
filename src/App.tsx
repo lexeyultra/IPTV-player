@@ -74,6 +74,7 @@ export default function App() {
   const [showSettingsModal, setShowSettingsModal] = useState<boolean>(false);
   const [focusedId, setFocusedId] = useState<string>("cat-News");
   const [showHotkeysModal, setShowHotkeysModal] = useState<boolean>(false);
+  const [showRotatePrompt, setShowRotatePrompt] = useState<boolean>(false);
 
   useEffect(() => {
     if (volumeHud.isFirstVolumeRender.current) {
@@ -319,14 +320,25 @@ export default function App() {
     setVisibleCount(40);
   }, [selectedCategory, searchQuery]);
 
+  useEffect(() => {
+    if (showRotatePrompt && device.orientation === "landscape") {
+      setShowRotatePrompt(false);
+      fullscreen.toggleFullscreen();
+    }
+  }, [showRotatePrompt, device.orientation, fullscreen.toggleFullscreen]);
+
   const handlePlayerDoubleClick = useCallback((e: React.MouseEvent) => {
     if (device.isTvMode) return;
     const target = e.target as HTMLElement;
     if (target.closest('button') || target.closest('input') || target.closest('select') || target.closest('a')) {
       return;
     }
+    if (device.deviceType === "Смартфон" && device.orientation === "portrait") {
+      setShowRotatePrompt(true);
+      return;
+    }
     fullscreen.toggleFullscreen();
-  }, [device.isTvMode, fullscreen.toggleFullscreen]);
+  }, [device.isTvMode, device.deviceType, device.orientation, fullscreen.toggleFullscreen]);
 
   const lastTapRef = React.useRef<number>(0);
 
@@ -339,7 +351,11 @@ export default function App() {
     if (now - lastTapRef.current < DOUBLE_TAP_DELAY) {
       const target = e.target as HTMLElement;
       if (!target.closest('button') && !target.closest('input') && !target.closest('select') && !target.closest('a')) {
-        fullscreen.toggleFullscreen();
+        if (device.deviceType === "Смартфон" && device.orientation === "portrait") {
+          setShowRotatePrompt(true);
+        } else {
+          fullscreen.toggleFullscreen();
+        }
       }
       lastTapRef.current = 0;
     } else {
@@ -663,6 +679,42 @@ export default function App() {
                     </p>
                   </div>
                 )}
+
+                {/* Rotate Device Prompt */}
+                <AnimatePresence>
+                  {showRotatePrompt && (
+                    <motion.div
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                      className="absolute inset-0 bg-black/90 backdrop-blur-sm flex flex-col items-center justify-center p-6 text-center z-50"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setShowRotatePrompt(false);
+                      }}
+                    >
+                      <motion.div
+                        animate={{ rotate: [0, -15, 15, -15, 0] }}
+                        transition={{ duration: 1.5, repeat: Infinity, repeatDelay: 1 }}
+                        className="mb-6"
+                      >
+                        <div className="w-20 h-20 rounded-2xl bg-bright-cyan/10 border-2 border-bright-cyan/50 flex items-center justify-center">
+                          <RotateCcw className="w-10 h-10 text-bright-cyan" />
+                        </div>
+                      </motion.div>
+                      <h3 className="text-white font-sans font-bold text-lg mb-2">
+                        Поверните устройство
+                      </h3>
+                      <p className="text-slate-400 text-sm max-w-xs">
+                        Для полноэкранного просмотра переведите телефон в горизонтальное положение
+                      </p>
+                      <div className="mt-6 flex items-center gap-2 text-slate-500 text-xs">
+                        <Smartphone className="w-4 h-4" />
+                        <span>или нажмите, чтобы закрыть</span>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
 
                 {/* Bottom Controls Overlay */}
                 <div 
