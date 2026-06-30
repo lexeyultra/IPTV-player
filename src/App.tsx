@@ -74,7 +74,6 @@ export default function App() {
   const [showSettingsModal, setShowSettingsModal] = useState<boolean>(false);
   const [focusedId, setFocusedId] = useState<string>("cat-News");
   const [showHotkeysModal, setShowHotkeysModal] = useState<boolean>(false);
-  const [showRotatePrompt, setShowRotatePrompt] = useState<boolean>(false);
 
   useEffect(() => {
     if (volumeHud.isFirstVolumeRender.current) {
@@ -321,11 +320,8 @@ export default function App() {
   }, [selectedCategory, searchQuery]);
 
   useEffect(() => {
-    if (showRotatePrompt && device.orientation === "landscape") {
-      setShowRotatePrompt(false);
-      fullscreen.toggleFullscreen();
-    }
-  }, [showRotatePrompt, device.orientation, fullscreen.toggleFullscreen]);
+    setVisibleCount(40);
+  }, [selectedCategory, searchQuery]);
 
   const handlePlayerDoubleClick = useCallback((e: React.MouseEvent) => {
     if (device.isTvMode) return;
@@ -333,12 +329,8 @@ export default function App() {
     if (target.closest('button') || target.closest('input') || target.closest('select') || target.closest('a')) {
       return;
     }
-    if (device.deviceType === "Смартфон" && device.orientation === "portrait") {
-      setShowRotatePrompt(true);
-      return;
-    }
     fullscreen.toggleFullscreen();
-  }, [device.isTvMode, device.deviceType, device.orientation, fullscreen.toggleFullscreen]);
+  }, [device.isTvMode, fullscreen.toggleFullscreen]);
 
   const lastTapRef = React.useRef<number>(0);
 
@@ -351,11 +343,7 @@ export default function App() {
     if (now - lastTapRef.current < DOUBLE_TAP_DELAY) {
       const target = e.target as HTMLElement;
       if (!target.closest('button') && !target.closest('input') && !target.closest('select') && !target.closest('a')) {
-        if (device.deviceType === "Смартфон" && device.orientation === "portrait") {
-          setShowRotatePrompt(true);
-        } else {
-          fullscreen.toggleFullscreen();
-        }
+        fullscreen.toggleFullscreen();
       }
       lastTapRef.current = 0;
     } else {
@@ -680,42 +668,6 @@ export default function App() {
                   </div>
                 )}
 
-                {/* Rotate Device Prompt */}
-                <AnimatePresence>
-                  {showRotatePrompt && (
-                    <motion.div
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      exit={{ opacity: 0 }}
-                      className="absolute inset-0 bg-black/90 backdrop-blur-sm flex flex-col items-center justify-center p-6 text-center z-50"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setShowRotatePrompt(false);
-                      }}
-                    >
-                      <motion.div
-                        animate={{ rotate: [0, -15, 15, -15, 0] }}
-                        transition={{ duration: 1.5, repeat: Infinity, repeatDelay: 1 }}
-                        className="mb-6"
-                      >
-                        <div className="w-20 h-20 rounded-2xl bg-bright-cyan/10 border-2 border-bright-cyan/50 flex items-center justify-center">
-                          <RotateCcw className="w-10 h-10 text-bright-cyan" />
-                        </div>
-                      </motion.div>
-                      <h3 className="text-white font-sans font-bold text-lg mb-2">
-                        Поверните устройство
-                      </h3>
-                      <p className="text-slate-400 text-sm max-w-xs">
-                        Для полноэкранного просмотра переведите телефон в горизонтальное положение
-                      </p>
-                      <div className="mt-6 flex items-center gap-2 text-slate-500 text-xs">
-                        <Smartphone className="w-4 h-4" />
-                        <span>или нажмите, чтобы закрыть</span>
-                      </div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-
                 {/* Bottom Controls Overlay */}
                 <div 
                   className={`absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent p-4 flex flex-col gap-2 transition-all duration-300 z-30
@@ -726,8 +678,8 @@ export default function App() {
                     <div className="absolute left-0 top-0 bottom-0 bg-bright-cyan w-3/4 shadow-[0_0_6px_#E2E8F0]"></div>
                   </div>
 
-                  <div className="flex justify-between items-center text-xs">
-                    <div className="flex items-center gap-3">
+                  <div className="flex justify-between items-center text-xs overflow-hidden">
+                    <div className="flex items-center gap-3 min-w-0 flex-1">
                       <button 
                         onClick={(e) => {
                           e.stopPropagation();
@@ -793,7 +745,7 @@ export default function App() {
                       </span>
                     </div>
 
-                    <div className="flex items-center gap-2 text-slate-400 font-mono text-[10px]">
+                    <div className="flex items-center gap-2 text-slate-400 font-mono text-[10px] flex-shrink-0">
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
@@ -818,10 +770,10 @@ export default function App() {
                         {player.aspectRatioMode === "fill" && "Масштаб: Растянуть"}
                       </button>
 
-                      <span className="px-1.5 py-0.5 bg-bright-cyan/10 text-bright-cyan border border-bright-cyan/20 rounded-[4px]">
+                      <span className="px-1.5 py-0.5 bg-bright-cyan/10 text-bright-cyan border border-bright-cyan/20 rounded-[4px] hidden sm:inline">
                         1080P HD
                       </span>
-                      <span>HLS / AAC</span>
+                      <span className="hidden md:inline">HLS / AAC</span>
 
                       <button 
                         onClick={(e) => {
