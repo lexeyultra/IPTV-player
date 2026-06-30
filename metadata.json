@@ -1,0 +1,6 @@
+{
+  "name": "IPTV Web Player",
+  "description": "Premium IPTV Web Player (Mobile & TV) with interactive M3U parser, live playback simulator, and built-in sleep timer controls.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
