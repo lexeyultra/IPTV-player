@@ -97,6 +97,14 @@ npm run test:watch   # Watch-режим тестов
 npm run lint         # ESLint проверка
 npm run typecheck    # TypeScript проверка
 npm run format       # Prettier форматирование
+
+# Docker
+docker compose up -d           # Запуск в Docker
+docker compose down            # Остановка
+docker compose logs -f         # Логи
+
+# Деплой на сервер
+./deploy.sh                    # Автоматический деплой
 ```
 
 ---
@@ -133,6 +141,66 @@ npm run format       # Prettier форматирование
 - **Android APK**: Через [Capacitor](https://capacitorjs.com/)
 - **Desktop**: Через [Tauri](https://tauri.app/) или [Electron](https://www.electronjs.org/)
 - **GitHub Pages**: Автодеплой через GitHub Actions
+
+---
+
+## Деплой одним скриптом
+
+Скрипт `deploy.sh` автоматизирует полный цикл: клонирование → сборка → systemd → запуск.
+
+```bash
+# Клонируйте и запустите
+git clone https://github.com/lexeyultra/IPTV-player.git
+cd IPTV-player
+chmod +x deploy.sh
+
+# Запуск (порт по умолчанию 3000)
+./deploy.sh
+
+# Или с настройками
+PORT=8080 APP_URL=https://iptv.example.com ./deploy.sh
+```
+
+Скрипт проверяет: Node.js >= 18, git, создаёт systemd-сервис, собирает билд, запускает и проверяет статус.
+
+---
+
+## Docker
+
+### Сборка и запуск
+
+```bash
+# Сборка образа и запуск
+docker compose up -d
+
+# Или через docker
+docker build -t iptv-player .
+docker run -d -p 3000:3000 --name iptv-player iptv-player
+```
+
+### Docker Compose с настройками
+
+```bash
+# С переменными окружения
+PORT=8080 APP_URL=https://iptv.example.com docker compose up -d
+```
+
+### Управление
+
+```bash
+docker compose ps          # Статус
+docker compose logs -f     # Логи
+docker compose restart     # Перезапуск
+docker compose down        # Остановка
+docker compose up -d --build  # Пересборка и запуск
+```
+
+### Healthcheck
+
+Контейнер автоматически проверяет доступность каждые 30 секунд:
+```bash
+docker inspect --format='{{.State.Health.Status}}' iptv-player
+```
 
 ---
 
