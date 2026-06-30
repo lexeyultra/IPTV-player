@@ -136,6 +136,238 @@ npm run format       # Prettier форматирование
 
 ---
 
+## Развёртывание на Ubuntu Server
+
+### 1. Подготовка сервера
+
+```bash
+# Обновление системы
+sudo apt update && sudo apt upgrade -y
+
+# Установка Node.js 18+ и npm
+curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+sudo apt install -y nodejs
+
+# Проверка версий
+node -v   # >= 18.x
+npm -v    # >= 9.x
+
+# Установка git (если не установлен)
+sudo apt install -y git
+```
+
+### 2. Клонирование и сборка
+
+```bash
+# Клонирование репозитория
+cd /opt
+sudo git clone https://github.com/lexeyultra/IPTV-player.git iptv-player
+sudo chown -R $USER:$USER /opt/iptv-player
+
+cd /opt/iptv-player
+
+# Установка зависимостей и сборка
+npm ci --production=false
+npm run build
+```
+
+### 3. Настройка systemd-сервиса
+
+Создайте файл `/etc/systemd/system/iptv-player.service`:
+
+```ini
+[Unit]
+Description=IPTV Web Player
+After=network.target
+
+[Service]
+Type=simple
+User=www-data
+Group=www-data
+WorkingDirectory=/opt/iptv-player
+ExecStart=/usr/bin/node dist/server.cjs
+Restart=always
+RestartSec=5
+Environment=NODE_ENV=production
+Environment=PORT=3000
+Environment=APP_URL=https://your-domain.com
+
+# Безопасность
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+ReadOnlyPaths=/opt/iptv-player
+ReadWritePaths=/opt/iptv-player
+
+[Install]
+WantedBy=multi-user.target
+```
+
+Активация и запуск:
+
+```bash
+# Перемещение файлов в директорию www-data
+sudo chown -R www-data:www-data /opt/iptv-player
+
+# Включение и запуск сервиса
+sudo systemctl daemon-reload
+sudo systemctl enable iptv-player
+sudo systemctl start iptv-player
+
+# Проверка статуса
+sudo systemctl status iptv-player
+```
+
+### 4. Настройка Nginx (рекомендуется)
+
+Установка и настройка Nginx как reverse proxy с SSL:
+
+```bash
+sudo apt install -y nginx certbot python3-certbot-nginx
+```
+
+Создайте конфиг `/etc/nginx/sites-available/iptv-player`:
+
+```nginx
+server {
+    listen 80;
+    server_name your-domain.com;
+
+    # Редирект на HTTPS
+    location / {
+        return 301 https://$server_name$request_uri;
+    }
+}
+
+server {
+    listen 443 ssl http2;
+    server_name your-domain.com;
+
+    # SSL (получится автоматически через certbot)
+    ssl_certificate /etc/letsencrypt/live/your-domain.com/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/your-domain.com/privkey.pem;
+
+    # Безопасность
+    add_header X-Frame-Options "SAMEORIGIN" always;
+    add_header X-Content-Type-Options "nosniff" always;
+    add_header X-XSS-Protection "1; mode=block" always;
+    add_header Referrer-Policy "strict-origin-when-cross-origin" always;
+
+    # Gzip
+    gzip on;
+    gzip_types text/plain text/css application/json application/javascript text/xml application/xml text/javascript;
+
+    location / {
+        proxy_pass http://127.0.0.1:3000;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_cache_bypass $http_upgrade;
+        proxy_read_timeout 30s;
+        proxy_connect_timeout 7s;
+    }
+
+    # Кэширование статических файлов
+    location /assets/ {
+        proxy_pass http://127.0.0.1:3000;
+        expires 30d;
+        add_header Cache-Control "public, immutable";
+    }
+
+    # WebSocket HMR (для dev, в production не нужен)
+    # location /ws {
+    #     proxy_pass http://127.0.0.1:3000;
+    #     proxy_http_version 1.1;
+    #     proxy_set_header Upgrade $http_upgrade;
+    #     proxy_set_header Connection "upgrade";
+    # }
+}
+```
+
+Активация:
+
+```bash
+sudo ln -s /etc/nginx/sites-available/iptv-player /etc/nginx/sites-enabled/
+sudo rm -f /etc/nginx/sites-enabled/default
+sudo nginx -t
+sudo systemctl reload nginx
+
+# Получение SSL-сертификата
+sudo certbot --nginx -d your-domain.com
+sudo systemctl enable certbot.timer
+```
+
+### 5. Автоматическое обновление
+
+Создайте скрипт `/opt/iptv-player/update.sh`:
+
+```bash
+#!/bin/bash
+cd /opt/iptv-player
+git pull origin main
+npm ci --production=false
+npm run build
+sudo systemctl restart iptv-player
+echo "[$(date)] IPTV Player updated and restarted" >> /var/log/iptv-update.log
+```
+
+```bash
+chmod +x /opt/iptv-player/update.sh
+```
+
+Crontab для автоматического обновления каждый день в 4:00:
+
+```bash
+sudo crontab -e
+# Добавить строку:
+0 4 * * * /opt/iptv-player/update.sh
+```
+
+### 6. Мониторинг
+
+```bash
+# Просмотр логов
+sudo journalctl -u iptv-player -f
+
+# Проверка статуса
+sudo systemctl status iptv-player
+
+# Перезапуск
+sudo systemctl restart iptv-player
+
+# Проверка порта
+sudo ss -tlnp | grep 3000
+```
+
+### Порядок команд (быстрый старт)
+
+```bash
+# 1. Установить Node.js, git
+sudo apt update && sudo apt install -y nodejs npm git
+
+# 2. Клонировать и собрать
+cd /opt && sudo git clone https://github.com/lexeyultra/IPTV-player.git iptv-player
+sudo chown -R $USER:$USER /opt/iptv-player
+cd /opt/iptv-player && npm ci && npm run build
+
+# 3. Настроить systemd
+sudo cp /opt/iptv-player/deploy/iptv-player.service /etc/systemd/system/
+sudo systemctl daemon-reload && sudo systemctl enable --now iptv-player
+
+# 4. Настроить Nginx + SSL
+sudo apt install -y nginx certbot python3-certbot-nginx
+sudo cp /opt/iptv-player/deploy/nginx.conf /etc/nginx/sites-available/iptv-player
+sudo ln -s /etc/nginx/sites-available/iptv-player /etc/nginx/sites-enabled/
+sudo nginx -t && sudo systemctl reload nginx
+sudo certbot --nginx -d your-domain.com
+```
+
+---
+
 ## Окружение
 
 | Переменная | Описание | По умолчанию |
