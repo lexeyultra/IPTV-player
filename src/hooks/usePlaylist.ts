@@ -3,7 +3,10 @@ import { SAMPLE_M3U_PLAYLIST, CATEGORIES, parseM3UPlaylist, Channel } from "../s
 import { SavedItem } from "../types";
 
 export function usePlaylist(addParserLogs: (logs: string[]) => void) {
-  const [rawPlaylist, setRawPlaylist] = useState<string>(SAMPLE_M3U_PLAYLIST);
+  const [rawPlaylist, setRawPlaylist] = useState<string>(() => {
+    const saved = localStorage.getItem("iptv_raw_playlist");
+    return saved || SAMPLE_M3U_PLAYLIST;
+  });
   const [channels, setChannels] = useState<Channel[]>([]);
   const [isLoadingPlaylist, setIsLoadingPlaylist] = useState<boolean>(false);
 
@@ -54,19 +57,28 @@ export function usePlaylist(addParserLogs: (logs: string[]) => void) {
 
   const debounceTimerRef = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
 
+  const pendingWritesRef = useRef<Record<string, string>>({});
+
   const debouncedSetItem = useCallback((key: string, value: string) => {
+    pendingWritesRef.current[key] = value;
     if (debounceTimerRef.current[key]) {
       clearTimeout(debounceTimerRef.current[key]);
     }
     debounceTimerRef.current[key] = setTimeout(() => {
-      localStorage.setItem(key, value);
+      localStorage.setItem(key, pendingWritesRef.current[key]);
+      delete pendingWritesRef.current[key];
       delete debounceTimerRef.current[key];
     }, 500);
   }, []);
 
   useEffect(() => {
     return () => {
-      Object.values(debounceTimerRef.current).forEach(clearTimeout);
+      Object.entries(debounceTimerRef.current).forEach(([key, timer]) => {
+        clearTimeout(timer);
+      });
+      Object.entries(pendingWritesRef.current).forEach(([key, value]) => {
+        localStorage.setItem(key, value);
+      });
     };
   }, []);
 
@@ -75,8 +87,12 @@ export function usePlaylist(addParserLogs: (logs: string[]) => void) {
   }, [savedItems, debouncedSetItem]);
 
   useEffect(() => {
-    debouncedSetItem("iptv_active_playlist_id", activePlaylistId);
-  }, [activePlaylistId, debouncedSetItem]);
+    debouncedSetItem("iptv_raw_playlist", rawPlaylist);
+  }, [rawPlaylist, debouncedSetItem]);
+
+  useEffect(() => {
+    localStorage.setItem("iptv_active_playlist_id", activePlaylistId);
+  }, [activePlaylistId]);
 
   const fetchAbortRef = useRef<AbortController | null>(null);
 
