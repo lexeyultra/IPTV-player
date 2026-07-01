@@ -4,20 +4,14 @@ import {
   Settings, 
   X, 
   Database, 
-  Code, 
-  FileText, 
   ListVideo, 
   Trash2, 
   Plus, 
   Upload, 
   Save, 
-  Check, 
-  Copy, 
-  Download,
   RefreshCw
 } from "lucide-react";
 import { SavedItem } from "../types";
-import { KOTLIN_FILES } from "../kotlinCode";
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -56,65 +50,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
 
-  // Kotlin source viewer states
-  const [activeKotlinFileIdx, setActiveKotlinFileIdx] = useState<number>(0);
-  const [copiedFileIdx, setCopiedFileIdx] = useState<number | null>(null);
-
   if (!isOpen) return null;
-
-  const fallbackCopyText = (text: string, index: number) => {
-    try {
-      const textArea = document.createElement("textarea");
-      textArea.value = text;
-      textArea.style.top = "0";
-      textArea.style.left = "0";
-      textArea.style.position = "fixed";
-      textArea.style.opacity = "0";
-      document.body.appendChild(textArea);
-      textArea.focus();
-      textArea.select();
-      const successful = document.execCommand('copy');
-      document.body.removeChild(textArea);
-      if (successful) {
-        setCopiedFileIdx(index);
-        setTimeout(() => setCopiedFileIdx(null), 2000);
-      } else {
-        console.error("Fallback copy failed.");
-      }
-    } catch (err) {
-      console.error("Could not copy text: ", err);
-    }
-  };
-
-  // Copy code to clipboard with robust cross-browser and iframe fallback
-  const handleCopyCode = (code: string, index: number) => {
-    if (navigator.clipboard && typeof navigator.clipboard.writeText === 'function') {
-      navigator.clipboard.writeText(code)
-        .then(() => {
-          setCopiedFileIdx(index);
-          setTimeout(() => setCopiedFileIdx(null), 2000);
-        })
-        .catch((err) => {
-          console.warn("navigator.clipboard failed, trying fallback:", err);
-          fallbackCopyText(code, index);
-        });
-    } else {
-      fallbackCopyText(code, index);
-    }
-  };
-
-  // Download code as .kt file
-  const handleDownloadCode = (file: typeof KOTLIN_FILES[0]) => {
-    const element = document.createElement("a");
-    const fileBlob = new Blob([file.code], { type: "text/plain;charset=utf-8" });
-    const objectUrl = URL.createObjectURL(fileBlob);
-    element.href = objectUrl;
-    element.download = file.name.split(" ")[0];
-    document.body.appendChild(element);
-    element.click();
-    document.body.removeChild(element);
-    URL.revokeObjectURL(objectUrl);
-  };
 
   const handleFormSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -169,10 +105,10 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
         </div>
 
         {/* Tab Selector */}
-        <div className="grid grid-cols-3 gap-1 bg-black/40 p-1 border border-deep-azure/20 rounded-2xl">
+        <div className="bg-black/40 p-1 border border-deep-azure/20 rounded-2xl">
           <button
             onClick={() => setSettingsActiveTab("playlists")}
-            className={`py-2 rounded-xl text-xs font-semibold flex items-center justify-center gap-2 transition-all cursor-pointer
+            className={`w-full py-2 rounded-xl text-xs font-semibold flex items-center justify-center gap-2 transition-all cursor-pointer
               ${settingsActiveTab === "playlists"
                 ? "bg-deep-azure border border-bright-cyan/25 text-white"
                 : "text-slate-400 hover:text-slate-200"
@@ -181,30 +117,6 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
           >
             <Database className="w-4 h-4" />
             <span>Источники ({savedItems.length})</span>
-          </button>
-          <button
-            onClick={() => setSettingsActiveTab("code")}
-            className={`py-2 rounded-xl text-xs font-semibold flex items-center justify-center gap-2 transition-all cursor-pointer
-              ${settingsActiveTab === "code"
-                ? "bg-deep-azure border border-bright-cyan/25 text-white"
-                : "text-slate-400 hover:text-slate-200"
-              }
-            `}
-          >
-            <Code className="w-4 h-4" />
-            <span>Kotlin Код</span>
-          </button>
-          <button
-            onClick={() => setSettingsActiveTab("instructions")}
-            className={`py-2 rounded-xl text-xs font-semibold flex items-center justify-center gap-2 transition-all cursor-pointer
-              ${settingsActiveTab === "instructions"
-                ? "bg-deep-azure border border-bright-cyan/25 text-white"
-                : "text-slate-400 hover:text-slate-200"
-              }
-            `}
-          >
-            <FileText className="w-4 h-4" />
-            <span>Инструкция</span>
           </button>
         </div>
 
@@ -469,139 +381,6 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                     <span>Сохранить и загрузить</span>
                   </button>
                 </form>
-
-              </div>
-            </div>
-          )}
-
-          {settingsActiveTab === "code" && (
-            <div className="flex flex-col gap-4 animate-fadeIn">
-              <div className="bg-black/20 border border-deep-azure/20 rounded-2xl p-4 flex flex-col gap-4">
-                
-                {/* File Tabs Selection */}
-                <div className="grid grid-cols-2 sm:grid-cols-5 gap-1.5">
-                  {KOTLIN_FILES.map((file, idx) => (
-                    <button
-                      key={idx}
-                      onClick={() => setActiveKotlinFileIdx(idx)}
-                      className={`px-2 py-1.5 rounded-lg text-left transition-all border text-[10px] font-medium flex flex-col gap-0.5 cursor-pointer
-                        ${activeKotlinFileIdx === idx 
-                          ? "bg-deep-azure border-bright-cyan text-white shadow-sm" 
-                          : "bg-black/30 border-deep-azure/30 text-slate-400 hover:border-deep-azure/50 hover:text-slate-200"
-                        }
-                      `}
-                    >
-                      <span className="font-mono text-[8px] text-bright-cyan/80 block truncate">
-                        {file.path.split("/").pop()}
-                      </span>
-                      <span className="truncate block font-sans text-[10px]">
-                        {file.name.split(" ")[0]}
-                      </span>
-                    </button>
-                  ))}
-                </div>
-
-                {/* Display Code Box */}
-                <div className="relative border border-deep-azure/30 bg-black/90 rounded-2xl overflow-hidden flex flex-col">
-                  
-                  {/* Title bar */}
-                  <div className="bg-midnight-blue/60 px-4 py-2 border-b border-deep-azure/20 flex justify-between items-center text-xs font-mono">
-                    <span className="text-slate-300 font-semibold flex items-center gap-1.5">
-                      <span className="w-2 h-2 rounded-full bg-emerald-400"></span>
-                      {KOTLIN_FILES[activeKotlinFileIdx].path}
-                    </span>
-
-                    <div className="flex items-center gap-2">
-                      <button
-                        onClick={() => handleCopyCode(KOTLIN_FILES[activeKotlinFileIdx].code, activeKotlinFileIdx)}
-                        className="p-1.5 hover:bg-slate-800 rounded text-slate-400 hover:text-white transition-colors flex items-center gap-1 cursor-pointer"
-                        title="Копировать код"
-                      >
-                        {copiedFileIdx === activeKotlinFileIdx ? (
-                          <Check className="w-3.5 h-3.5 text-emerald-400 animate-scale" />
-                        ) : (
-                          <Copy className="w-3.5 h-3.5" />
-                        )}
-                      </button>
-                      <button
-                        onClick={() => handleDownloadCode(KOTLIN_FILES[activeKotlinFileIdx])}
-                        className="p-1.5 hover:bg-slate-800 rounded text-slate-400 hover:text-white transition-colors cursor-pointer"
-                        title="Скачать .kt файл"
-                      >
-                        <Download className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Brief descriptive text */}
-                  <div className="bg-slate-900/30 px-4 py-2 text-[10px] text-slate-400 italic leading-relaxed border-b border-deep-azure/10">
-                    {KOTLIN_FILES[activeKotlinFileIdx].description}
-                  </div>
-
-                  {/* Scrollable code block */}
-                  <div className="p-4 overflow-x-auto font-mono text-[10px] text-slate-300 max-h-72 leading-relaxed select-text whitespace-pre bg-[#050B14]">
-                    <code>
-                      {KOTLIN_FILES[activeKotlinFileIdx].code}
-                    </code>
-                  </div>
-                </div>
-
-              </div>
-            </div>
-          )}
-
-          {settingsActiveTab === "instructions" && (
-            <div className="flex flex-col gap-4 animate-fadeIn">
-              <div className="bg-black/30 border border-deep-azure/20 rounded-2xl p-5 flex flex-col gap-3 text-xs text-slate-300 leading-relaxed">
-                
-                <h4 className="font-display font-semibold text-xs text-bright-cyan tracking-wide flex items-center gap-2">
-                  <Settings className="w-4 h-4 text-bright-cyan" />
-                  <span>ИНСТРУКЦИЯ ПО ИНТЕГРАЦИИ (ANDROID STUDIO)</span>
-                </h4>
-
-                <p>
-                  Чтобы перенести этот высокопроизводительный IPTV плеер в ваше нативное Android-приложение, добавьте следующие зависимости в файл <strong>build.gradle.kts (Module: app)</strong>:
-                </p>
-
-                <div className="bg-black/80 rounded-2xl p-4 font-mono text-[10px] text-slate-300 border border-deep-azure/30 overflow-x-auto leading-normal">
-                  {`dependencies {
-    // 1. Android Jetpack Compose
-    implementation("androidx.compose.ui:ui:1.6.0")
-    implementation("androidx.compose.material3:material3:1.2.0")
-
-    // 2. Media3 ExoPlayer для HLS и воспроизведения потоков M3U8
-    implementation("androidx.media3:media3-exoplayer:1.2.1")
-    implementation("androidx.media3:media3-ui:1.2.1")
-
-    // 3. Coil для кэширования и производительной загрузки логотипов
-    implementation("io.coil-kt:coil-compose:2.5.0")
-
-    // 4. Paging 3 для инкрементальной загрузки списков 1000+ каналов
-    implementation("androidx.paging:paging-runtime-ktx:3.2.1")
-    implementation("androidx.paging:paging-compose:3.2.1")
-}`}
-                </div>
-
-                <div className="flex flex-col gap-2.5 pt-2 text-[11px] text-slate-400">
-                  <div className="flex items-start gap-2">
-                    <span className="w-5 h-5 bg-deep-azure/60 border border-bright-cyan/30 rounded-full flex items-center justify-center text-[10px] text-bright-cyan font-bold font-mono flex-shrink-0 mt-0.5">1</span>
-                    <span>
-                      Создайте в вашем проекте пакеты по Clean Architecture: <code>model</code>, <code>parser</code>, <code>paging</code>, <code>viewmodel</code> и <code>ui</code>.
-                    </span>
-                  </div>
-                  <div className="flex items-start gap-2">
-                    <span className="w-5 h-5 bg-deep-azure/60 border border-bright-cyan/30 rounded-full flex items-center justify-center text-[10px] text-bright-cyan font-bold font-mono flex-shrink-0 mt-0.5">2</span>
-                    <span>
-                      Скопируйте файлы <code>Channel.kt</code>, <code>PlaylistParser.kt</code>, <code>ChannelPagingSource.kt</code>, <code>IptvViewModel.kt</code> и <code>TvComponents.kt</code> в соответствующие директории.
-                    </span>
-                  </div>
-                  <div className="flex items-start gap-2">
-                    <span className="w-5 h-5 bg-deep-azure/60 border border-bright-cyan/30 rounded-full flex items-center justify-center text-[10px] text-bright-cyan font-bold font-mono flex-shrink-0 mt-0.5">3</span>
-                    <span>
-                      Инициализируйте плейлист в <code>MainActivity.kt</code>, передав поток плейлиста в метод парсера: <code>val channels = PlaylistParser().parse(assets.open("playlist.m3u"))</code>.
-                    </span>
-                  </div>
-                </div>
 
               </div>
             </div>
