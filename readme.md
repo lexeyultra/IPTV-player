@@ -47,7 +47,7 @@
 | Слой | Технология |
 |---|---|
 | UI | React 19 + TypeScript 5.8 |
-| Сборка | Vite 6 |
+| Сборка | Vite 6 (code splitting, console cleanup в production) |
 | Стили | Tailwind CSS 4 |
 | Анимации | Motion (Framer Motion) |
 | Иконки | Lucide React |
@@ -78,8 +78,8 @@ src/
 │   ├── useOsd.ts              # OSD уведомления
 │   └── useParserLogs.ts       # Логи парсера (лимит 200)
 ├── components/
-│   ├── SettingsModal.tsx       # Настройки плейлистов
-│   └── ChannelLogo.tsx        # Логотип канала с fallback
+│   ├── SettingsModal.tsx       # Настройки плейлистов (lazy + memo)
+│   └── ChannelLogo.tsx        # Логотип канала с fallback (memo)
 ├── samplePlaylist.ts           # M3U парсер, категории, логотипы
 ├── types.ts                    # TypeScript интерфейсы
 └── __tests__/                  # Тесты
@@ -145,7 +145,7 @@ docker compose logs -f         # Логи
 
 ## Сборка под платформы
 
-- **PWA**: Установка как веб-приложение (работает из коробки)
+- **PWA**: Установка как веб-приложение (работает из коробки, `manifest.json` настроен)
 - **Android APK**: Через [Capacitor](https://capacitorjs.com/)
 - **Desktop**: Через [Tauri](https://tauri.app/) или [Electron](https://www.electronjs.org/)
 - **GitHub Pages**: Автодеплой через GitHub Actions
