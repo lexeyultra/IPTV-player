@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, memo } from "react";
 import { motion } from "motion/react";
 import { 
   Settings, 
@@ -27,7 +27,7 @@ interface SettingsModalProps {
   isScanning: boolean;
 }
 
-export const SettingsModal: React.FC<SettingsModalProps> = ({
+export const SettingsModal: React.FC<SettingsModalProps> = memo(({
   isOpen,
   onClose,
   savedItems,
@@ -389,4 +389,6 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
       </motion.div>
     </div>
   );
-};
+});
+
+SettingsModal.displayName = "SettingsModal";

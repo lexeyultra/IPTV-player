@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback } from "react";
+import React, { useState, useEffect, useMemo, useCallback, Suspense, lazy } from "react";
 import { 
   motion, 
   AnimatePresence 
@@ -32,7 +32,7 @@ import {
 import { 
   CATEGORIES, 
 } from "./samplePlaylist";
-import { SettingsModal } from "./components/SettingsModal";
+const SettingsModal = lazy(() => import("./components/SettingsModal").then(m => ({ default: m.SettingsModal })));
 import { ChannelLogo } from "./components/ChannelLogo";
 
 import { useParserLogs } from "./hooks/useParserLogs";
@@ -1304,19 +1304,21 @@ export default function App() {
       {/* Settings Modal */}
       <AnimatePresence>
         {showSettingsModal && (
-          <SettingsModal
-            isOpen={showSettingsModal}
-            onClose={() => setShowSettingsModal(false)}
-            savedItems={playlist.savedItems}
-            activePlaylistId={playlist.activePlaylistId}
-            onLoadSavedItem={playlist.loadSavedItem}
-            onDeleteSavedItem={playlist.handleDeleteSavedItem}
-            onAddSavedItem={playlist.handleAddSavedItem}
-            isAutoPlayEnabled={player.isAutoPlayEnabled}
-            setIsAutoPlayEnabled={player.setIsAutoPlayEnabled}
-            onScanActivePlaylist={() => scanner.scanChannels(playlist.channels)}
-            isScanning={scanner.isScanning}
-          />
+          <Suspense fallback={<div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center"><div className="text-white text-sm">Загрузка...</div></div>}>
+            <SettingsModal
+              isOpen={showSettingsModal}
+              onClose={() => setShowSettingsModal(false)}
+              savedItems={playlist.savedItems}
+              activePlaylistId={playlist.activePlaylistId}
+              onLoadSavedItem={playlist.loadSavedItem}
+              onDeleteSavedItem={playlist.handleDeleteSavedItem}
+              onAddSavedItem={playlist.handleAddSavedItem}
+              isAutoPlayEnabled={player.isAutoPlayEnabled}
+              setIsAutoPlayEnabled={player.setIsAutoPlayEnabled}
+              onScanActivePlaylist={() => scanner.scanChannels(playlist.channels)}
+              isScanning={scanner.isScanning}
+            />
+          </Suspense>
         )}
       </AnimatePresence>
 

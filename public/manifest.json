@@ -1,6 +1,7 @@
 {
   "short_name": "IPTV Player",
-  "name": "IPTV Web Player Premium",
+  "name": "IPTV Web Player",
+  "description": "Современный веб-плеер для IPTV-телевидения с поддержкой HLS и M3U",
   "icons": [
     {
       "src": "/icon-192.png",
@@ -19,5 +20,6 @@
   "background_color": "#050B14",
   "theme_color": "#0A111F",
   "display": "standalone",
-  "orientation": "portrait-primary"
+  "orientation": "any",
+  "categories": ["entertainment", "video"]
 }

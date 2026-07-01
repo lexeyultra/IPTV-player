@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, memo } from "react";
 
 interface ChannelLogoProps {
   src: string;
@@ -6,12 +6,11 @@ interface ChannelLogoProps {
   className?: string;
 }
 
-export const ChannelLogo: React.FC<ChannelLogoProps> = ({ src, name, className }) => {
+export const ChannelLogo = memo<ChannelLogoProps>(({ src, name, className }) => {
   const defaultLogo = "https://img.icons8.com/emoji/96/television.png";
   const [imgSrc, setImgSrc] = useState(src || defaultLogo);
   const [hasError, setHasError] = useState(false);
 
-  // When src changes, reset error states and try the new source
   useEffect(() => {
     setImgSrc(src || defaultLogo);
     setHasError(false);
@@ -33,4 +32,6 @@ export const ChannelLogo: React.FC<ChannelLogoProps> = ({ src, name, className }
       onError={handleError}
     />
   );
-};
+});
+
+ChannelLogo.displayName = "ChannelLogo";
