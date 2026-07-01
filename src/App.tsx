@@ -351,30 +351,6 @@ export default function App() {
     }
   }, [device.isTvMode, controls.resetControlsTimer, fullscreen.toggleFullscreen]);
 
-  const handleLoadPlaylistUrl = useCallback(async (e: React.FormEvent) => {
-    e.preventDefault();
-    const playlistUrl = (e.target as HTMLFormElement).querySelector<HTMLInputElement>("input")?.value || "";
-    if (!playlistUrl.trim()) return;
-
-    playlist.setIsLoadingPlaylist(true);
-    addParserLogs([`🌐 Отправка запроса для: ${playlistUrl}`]);
-
-    try {
-      const data = await playlist.fetchPlaylistData(playlistUrl);
-      playlist.setRawPlaylist(data);
-      addParserLogs([`✨ Плейлист успешно загружен и передан парсеру!`]);
-    } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : String(err);
-      console.error(err);
-      addParserLogs([
-        `❌ Ошибка загрузки URL: ${message}`,
-        `💡 Подсказка: Убедитесь, что URL возвращает корректный текстовый M3U поток.`
-      ]);
-    } finally {
-      playlist.setIsLoadingPlaylist(false);
-    }
-  }, [playlist, addParserLogs]);
-
   const triggerTvDpad = useCallback((direction: "Up" | "Down" | "Left" | "Right" | "Enter" | "Back") => {
     controls.resetControlsTimer();
     const activeCategories = ALL_CATEGORIES.filter(cat => 
@@ -512,7 +488,7 @@ export default function App() {
                 ref={fullscreen.playerContainerRef}
                 onMouseMove={controls.resetControlsTimer}
                 onTouchStart={handlePlayerTouchStart}
-                onClick={(e) => {
+                onClick={() => {
                   controls.resetControlsTimer();
                   if (device.showLandscapeSidebar) {
                     device.setShowLandscapeSidebar(false);

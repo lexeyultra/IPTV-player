@@ -5,6 +5,7 @@ import { useOsd } from "../hooks/useOsd";
 import { useFavorites } from "../hooks/useFavorites";
 import { useControlsTimer } from "../hooks/useControlsTimer";
 import { useVolumeHud } from "../hooks/useVolumeHud";
+import type { Channel } from "../samplePlaylist";
 
 describe("useParserLogs", () => {
   it("starts with empty logs", () => {
@@ -48,7 +49,7 @@ describe("useParserLogs", () => {
       result.current.addParserLogs(["initial"]);
     });
     act(() => {
-      result.current.addParserLogs((prev) => ["from updater"]);
+      result.current.addParserLogs((_prev) => ["from updater"]);
     });
     expect(result.current.parserLogs).toEqual(["initial", "from updater"]);
   });
@@ -111,7 +112,7 @@ describe("useFavorites", () => {
   it("toggles favorite on", () => {
     const { result } = renderHook(() => useFavorites(mockAddLogs));
     act(() => {
-      result.current.toggleFavorite({ url: "http://test.com", name: "Test" } as any);
+      result.current.toggleFavorite({ url: "http://test.com", name: "Test" } as unknown as Channel);
     });
     expect(result.current.favoriteUrls).toContain("http://test.com");
   });
@@ -119,10 +120,10 @@ describe("useFavorites", () => {
   it("toggles favorite off", () => {
     const { result } = renderHook(() => useFavorites(mockAddLogs));
     act(() => {
-      result.current.toggleFavorite({ url: "http://test.com", name: "Test" } as any);
+      result.current.toggleFavorite({ url: "http://test.com", name: "Test" } as unknown as Channel);
     });
     act(() => {
-      result.current.toggleFavorite({ url: "http://test.com", name: "Test" } as any);
+      result.current.toggleFavorite({ url: "http://test.com", name: "Test" } as unknown as Channel);
     });
     expect(result.current.favoriteUrls).not.toContain("http://test.com");
   });
@@ -130,7 +131,7 @@ describe("useFavorites", () => {
   it("calls addParserLogs with correct message", () => {
     const { result } = renderHook(() => useFavorites(mockAddLogs));
     act(() => {
-      result.current.toggleFavorite({ url: "http://test.com", name: "My Channel" } as any);
+      result.current.toggleFavorite({ url: "http://test.com", name: "My Channel" } as unknown as Channel);
     });
     expect(mockAddLogs).toHaveBeenCalledWith(["💖 Добавлен в избранное: \"My Channel\""]);
   });

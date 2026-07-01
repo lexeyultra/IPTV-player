@@ -59,7 +59,7 @@ export function usePlaylist(addParserLogs: (logs: string[]) => void) {
 
   useEffect(() => {
     return () => {
-      Object.entries(debounceTimerRef.current).forEach(([key, timer]) => {
+      Object.values(debounceTimerRef.current).forEach((timer) => {
         clearTimeout(timer);
       });
       Object.entries(pendingWritesRef.current).forEach(([key, value]) => {
