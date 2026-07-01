@@ -715,6 +715,8 @@ export default function App() {
                             }
                             showOsd(`🔊 Громкость: ${Math.round(val * 100)}%`);
                           }}
+                          onClick={(e) => e.stopPropagation()}
+                          onTouchStart={(e) => e.stopPropagation()}
                           className="w-12 h-1 bg-slate-800 rounded-[4px] appearance-none cursor-pointer accent-bright-cyan transition-all duration-300 md:group-hover/volume:w-16"
                           title="Регулировка громкости"
                         />

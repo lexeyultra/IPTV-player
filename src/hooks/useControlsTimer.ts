@@ -9,9 +9,10 @@ export function useControlsTimer() {
     if (controlsTimerRef.current) {
       clearTimeout(controlsTimerRef.current);
     }
+    const isMobile = /iphone|ipad|ipod|android|blackberry|mini|windows\sphone|iemobile/i.test(navigator.userAgent.toLowerCase());
     controlsTimerRef.current = setTimeout(() => {
       setShowPlayerControls(false);
-    }, 15000);
+    }, isMobile ? 3000 : 15000);
   }, []);
 
   useEffect(() => {
